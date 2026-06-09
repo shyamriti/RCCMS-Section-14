@@ -863,4 +863,141 @@ body::before {
 .portal-main-workspace .copied-badge::after {
   border-color: #27ae60 transparent transparent transparent !important;
 }
+.registration-title {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #e74c3c;
+  margin-bottom: 0.75rem;
+}
 
+@media (max-width: 768px) {
+  .registration-title {
+    font-size: 2rem;
+  }
+}
+.registration-container {
+  max-width: 1100px;
+  width: 100%;
+}
+.section-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin-top: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.form-section {
+  margin-bottom: 2rem;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.form-group select,
+.form-group input {
+  padding: 0.85rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+.form-actions {
+  margin-top: 3rem;
+}
+.applicant-table-container {
+  margin-top: 2rem;
+}
+
+.applicant-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.applicant-table th {
+  text-align: left;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+
+.applicant-table td {
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.applicant-table input {
+  width: 100%;
+  min-width: 100%;
+  padding: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+}
+
+.table-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.add-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.add-btn:hover {
+  background: #c0392b;
+}
+.table-wrapper {
+  overflow-x: auto;
+}
+.captcha-box {
+  width: 200px;
+  padding: 15px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  letter-spacing: 5px;
+}
+.button-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.cancel-btn {
+  border: none;
+  border-radius: 14px;
+  background: #64748b;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 1rem 1.5rem;
+}
+
+.button-group .btn-primary,
+.button-group .cancel-btn {
+  flex: 1;
+}

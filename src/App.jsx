@@ -1,8 +1,9 @@
-import React from 'react';
 import Header from './components/Header';
-import DeveloperDashboard from './components/DeveloperDashboard';
-import CaseRegistration from './components/CaseRegistration';
 import Footer from './components/Footer';
+import DeveloperDashboard from './components/DeveloperDashboard';
+import NewCaseRegistration from './pages/NewCaseRegistration';
+
+import { Routes, Route } from 'react-router-dom';
 
 function App() {
   return (
@@ -10,7 +11,17 @@ function App() {
       <Header />
 
       <main className="portal-main-workspace">
-      <CaseRegistration />
+        <Routes>
+          <Route
+            path="/"
+            element={<DeveloperDashboard />}
+          />
+
+          <Route
+            path="/new-case-registration"
+            element={<NewCaseRegistration />}
+          />
+        </Routes>
       </main>
 
       <Footer />

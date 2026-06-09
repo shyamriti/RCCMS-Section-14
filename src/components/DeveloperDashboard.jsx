@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import axios from "axios";
+import { useNavigate } from 'react-router-dom';
 import {
   AppWindow,
   User,
@@ -33,21 +35,35 @@ async function calculateHMAC(message, secret) {
     messageData
   );
 
-  const hashArray = Array.from(new Uint8Array(signature));
-  let hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const bytes = new Uint8Array(signature);
 
-  hashHex = hashHex.replace(/%(?![0-9a-fA-F]{2})/g, "%25").replace(/\+/g, "");
+let binary = '';
 
-  return hashHex;
+bytes.forEach(byte => {
+  binary += String.fromCharCode(byte);
+});
+
+let hashBase64 = btoa(binary);
+
+hashBase64 = hashBase64
+  .replace(/%(?![0-9a-fA-F]{2})/g, "%25")
+  .replace(/\+/g, "");
+
+return hashBase64;
 }
 
 export default function DeveloperDashboard() {
-  const [credentials] = useState({
-    userId: 'usr_alpha_77',
-    secretKey: 'sec_9k3j84hf92',
-    maskedSecretKey: 'sec_••••••••••••x92',
-    appId: 'app_98374_prod'
-  });
+const [credentials] = useState({
+  userId: 'usr_alpha_77',
+
+  secretKey:
+    'd4d6e2c0dd461e873663bb228229d9200cc2a2799a88df817k6e7b95a0992797',
+
+  maskedSecretKey:
+    'd4d6••••••••••••••••••••••••2797',
+
+  appId: 'rccms_summer_camp'
+});
 
   const targetUrl = 'https://your-target-endpoint.gov.in/login.jsp';
 
@@ -71,39 +87,60 @@ export default function DeveloperDashboard() {
     };
     updateHmac();
   }, [messageString, credentials.secretKey]);
+  const navigate = useNavigate();
+  const handleLaunch = async () => {
 
-  const handleLaunch = () => {
-    setIsConnecting(true);
+  setIsConnecting(true);
 
-    setTimeout(async () => {
-      const payload = {
-        transactionId,
-        userId: credentials.userId,
-        secretKey: credentials.secretKey,
-        appId: credentials.appId,
-        undersection,
-        callbackUrl,
-        hmac: generatedHmac
-      };
+  try {
 
-      try {
-        await fetch(targetUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload),
-          mode: 'no-cors',
-          keepalive: true
-        });
-      } catch (err) {
-        console.warn('Network transfer executed or completed: ', err);
-      } finally {
-        setIsConnecting(false);
-        window.location.href = targetUrl;
-      }
-    }, 1500);
-  };
+    const payload = {
+      transactionId,
+      userId: credentials.userId,
+      appId: credentials.appId,
+      undersection,
+      callbackUrl,
+      hmac: generatedHmac
+    };
+
+    const response = await axios.post(
+      "http://localhost:8080/api/validate-hmac",
+      payload
+    );
+
+    console.log("Validation Response:", response.data);
+
+    if (response.data.valid) {
+
+      navigate("/new-case-registration", {
+        state: {
+          transactionId,
+          userId: credentials.userId,
+          appId: credentials.appId,
+          undersection,
+          callbackUrl,
+          hmac: generatedHmac
+        }
+      });
+
+    } else {
+
+      alert(response.data.message);
+
+    }
+
+  } catch (error) {
+
+    console.error("Validation Error:", error);
+
+    alert("Unable to connect to validation service.");
+
+  } finally {
+
+    setIsConnecting(false);
+
+  }
+};
 
   return (
     <div className="glass-container" style={{ maxWidth: '680px' }}>
