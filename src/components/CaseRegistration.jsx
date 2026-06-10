@@ -25,7 +25,7 @@ export default function CaseRegistration() {
 
         <div style={rowStyle}>
           <div>
-            <label>District *</label>
+            <label>District <span style={{ color: "red" }}>*</span></label>
             <br />
             <select style={inputStyle}>
               <option>Select District</option>
@@ -33,7 +33,7 @@ export default function CaseRegistration() {
           </div>
 
           <div>
-            <label>Subdivision *</label>
+            <label>Subdivision <span style={{ color: "red" }}>*</span></label>
             <br />
             <select style={inputStyle}>
               <option>Select Subdivision</option>
@@ -56,11 +56,11 @@ export default function CaseRegistration() {
           <thead>
             <tr>
               <th style={thStyle}>Sl No</th>
-              <th style={thStyle}>Name</th>
-              <th style={thStyle}>Guardian</th>
-              <th style={thStyle}>Relation</th>
-              <th style={thStyle}>Address</th>
-              <th style={thStyle}>Mobile</th>
+              <th style={thStyle}>Name <span style={{ color: "red" }}>*</span></th>
+              <th style={thStyle}>Guardian <span style={{ color: "red" }}>*</span></th>
+              <th style={thStyle}>Relation <span style={{ color: "red" }}>*</span></th>
+              <th style={thStyle}>Address <span style={{ color: "red" }}>*</span></th>
+              <th style={thStyle}>Mobile <span style={{ color: "red" }}>*</span></th>
               <th style={thStyle}>Email</th>
             </tr>
           </thead>
