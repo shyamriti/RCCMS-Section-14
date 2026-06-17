@@ -1,0 +1,114 @@
+Technical Specifications Document
+Land Allotment Application (RCCMS-SECTION-14)
+1). Project Brief
+Purpose:
+The primary objective of the Land Allotment application is to facilitate the process of land allotment for users who are redirected from the Jamipariseva portal. The system is specifically engineered to ensure secure data transfer, rigorously validate incoming user requests, efficiently fetch necessary land records from external APIs, and meticulously manage the entire lifecycle of the land allotment application. 
+Scope:
+The scope of the project encompasses the development and integration of a highly secure, multi-tier web application designed for scalability and maintainability. The system’s scope includes:
+Frontend Interface: A responsive landing page responsible for user interaction, input validation (including Captcha and document uploads), and displaying both applicant and land details.
+Backend Processing: A SpringBoot API that serves as the core engine to handle all business logic, process data submissions, and execute external API proxy calls.
+Database Management: Direct integration with the existing Tripura RCCMS PostgreSQL database schema to authenticate client requests and distribute submitted Section 14 application data across highly normalized transaction tables.
+Security Implementation: Strict enforcement of Hash-based Message Authentication Code (HMAC) using the SHA-256 algorithm to validate all incoming requests and prevent tampering.
+Overview: The application operates through a structured and automated lifecycle. The process begins when a user is redirected from the main Jamipariseva portal via a URL containing specific parameters and a computed HMAC. The backend API immediately recalculates and verifies this HMAC using a pre-shared secret key.
+Once validated, the system logs the incoming request as “PENDING” in the database. As the landing page loads, the backend acts as a proxy, fetching specific plot and owner information from an external Land-records API to contextually populate the user’s view. The user then completes the Section 14 Application Form and submits it. Following rigorous real-time input validation to prevent malicious attacks (such as SQL injection or XSS), the backend distributes the finalized Section 14 application data across the existing RCCMS relational tables (such as tblrevcases and tbllanddetails), generates a unique Revenue Case Registration ID, and logs the transaction for auditing. Finally, the system displays a success message and automatically redirects the user back to the source system’s callback URL.
+Perspective: The Land Allotment application functions as an interconnected, specialized module rather than an isolated, standalone product. It operates as a secure, intermediary bridge between the primary Jamipariseva portal (which acts as the user’s starting point) and the external Tripura RCCMS UAT APIs (which provide the necessary localized geographical data context).
+Because it relies on external systems for user entry and data retrieval, its architecture is heavily dependent on secure handshake protocols (HMAC and pre-shared keys). Built using modern enterprise technologies—specifically Java 17+, SpringBoot, and PostgreSQL 14+—the product is engineered to act as a secure, atomic transaction handler that seamlessly integrates into the broader revenue service delivery ecosystem without exposing internal database operations directly to the frontend.
+2). Functional Requirements
+The functional requirements define the specific behaviors and operations that the Land Allotment application
+must support.
+2.1 Security and Access Control
+The system shall receive incoming redirection requests and extract the app_id parameter (expected as rccms_summer_camp).
+The system shall authenticate the client by validating the app_id against the existing records natively stored in the tblclientauth database table.
+The system shall mandate an HMAC validation (Java HmacSHA256) for incoming API requests, dynamically constructing the message payload based on the geographical parameters of the specific endpoint (e.g., distcode + subdivcode + app_id).
+The system shall grant access and load the landing page only if the HMAC validation is successful.
+The system shall instantly reject invalid requests and redirect the user to the specified redirect_url with a descriptive error message.
+2.2 Integration and Data Retrieval
+The backend API shall act as a proxy to sequentially fetch localized dropdown data from the external Tripura RCCMS UAT APIs.
+The system shall execute five distinct external API calls in a cascading sequence: Get District, Get Subdivision, Get Revenue Circle, Get Tehsil, and Get Mouza.
+The system shall expose a custom internal API (/api/v1/plot-list) to query the masPlotList database table and fetch plot details filtered dynamically by the lgd_village_code and khatian_no parameters.
+2.3 User Interface and Data Entry
+2.3.1 Applicant Details
+The system shall provide dropdown menus for the user to select their specific “District” and “Subdivision”.
+The system shall allow the user to input demographic details for applicants, including Name, Guardian, Relation, Address, Mobile, and Email.
+The system shall feature an “+ Add Applicant” function to allow the dynamic addition of multiple applicants to a single request.
+2.3.2 Land Details & Area Allocation
+The system shall provide dropdown menus for the user to select the “Revenue Circle”, “Tehsil”, and “Mouja”.
+The system shall allow the user to input specific plot details including Khatian No, Plot No, Area Recorded, Land Main Class, and Land Sub Class.
+The system shall feature an “+ Add Land” function to allow the user to submit multiple land records simultaneously.
+The system shall provide a dedicated text input field for the user to specify the “Area To Be Allotted”.
+2.3.3 Supporting Documents
+The system shall allow users to upload an “Electricity Bill” in PDF format.
+The system shall provide an upload field for “Other Supporting Document”.
+2.4 Validation and Error Handling
+The frontend interface shall perform real-time client-side validation to check for mandatory fields and correct data formats prior to submission.
+The frontend shall sanitize all inputs to mitigate the risk of SQL injection and Cross-Site Scripting (XSS) attacks.
+The system shall display a visual Captcha code and require the user to enter the corresponding text to verify human interaction before submission.
+The backend shall catch all critical system exceptions (e.g., database connection loss) and trigger an immediate redirect to the Jami Pariseva designated error handler URL.
+2.5 Data Processing and Persistence
+The system shall process the finalized Section 14 Application Form upon submission, distributing the payload across a normalized relational schema.
+The system shall insert the core case registration metadata into the tblrevcases table.
+The system shall insert applicant demographic details into the tblpetetioners table.
+The system shall insert the specific plot data into the tbllanddetails table.
+The system shall log all successful transactions and user activities within the tbluserlog table to maintain an operational audit trail.
+The system shall record all application failures and stack traces in the error_logs table for auditing.
+2.6 Post-Submission Operations
+The system shall generate a unique  Revenue Case Registration ID upon the successful storage of the application data.
+The system shall display a UI success message containing the generated Revenue Case Registration ID to the user.
+The system shall automatically redirect the user to the source callback URL, transmitting the new Allotment ID and a success status parameter.
+3). System Architecture
+The Land Allotment application is built upon a highly decoupled, modern multi-tier architecture. This specific design pattern was deliberately chosen to ensure enterprise-grade scalability, robust security protocols, and long-term maintainability. The system operates through a seamless orchestration of several core components, ensuring a clear separation of concerns throughout the application lifecycle.
+i) The Frontend (User Interface):
+The presentation layer is composed of a fully responsive landing page designed to optimize the end-user experience across various devices. To maintain strict security boundaries, this frontend operates in complete isolation; it does not interact directly with the database or any external services, communicating exclusively via secure requests to the backend API.
+Core Technologies: HTML5, CSS3, JavaScript (ES6+), and standard Web Forms.
+Fundamental Work: To serve as the direct interactive layer for the user, responsible for data collection, visual feedback, and initial security screening.
+Basic Tasks:
+Render dynamic data entry forms (e.g., dropdowns for District, Subdivision, and Mouja).
+Execute rigorous client-side input validation to check for mandatory fields and correct data formats.
+Sanitize all user inputs to mitigate vulnerabilities like Cross-Site Scripting (XSS) and SQL injection.
+Handle secure file uploads for supporting documents (like the Electricity Bill PDF).
+Enforce anti-bot authentication via visual Captcha verification before allowing form submission.
+ii) The Backend (Core Engine):
+Serving as the central operational engine of the system, the backend is engineered using the Java-based SpringBoot framework. This layer completely encapsulates the entirety of the application’s core business logic and routing mechanisms.  
+Core Technologies: Java 17+, SpringBoot Framework, RESTful Web Services, and cryptographic libraries (HMAC SHA-256).  
+Fundamental Work: To act as the secure orchestrator of the system, processing business rules, managing database transactions, and validating all incoming and outgoing data.
+Basic Tasks:
+Intercept incoming redirection requests from the Jami Pariseva portal and validate their authenticity using HMAC SHA-256 encryption.
+Perform final, server-side validation on all submitted application payloads.
+Utilize Spring’s @Transactional annotation to ensure database updates are atomic and secure. 
+Generate a unique Revenue Case Registration ID upon successful data processing.
+Construct success payloads or error messages and dictate the final URL redirection path back to the source system.
+iii) The Database (Persistent Storage):
+For highly reliable data persistence, the architecture leverages PostgreSQL as its primary relational database management system. The database schema is intentionally designed to enforce strict data integrity constraints while simultaneously supporting highly efficient querying mechanisms.
+Core Technologies: PostgreSQL 14+ and Standard Relational SQL.
+Fundamental Work: To provide a secure, structured, and persistent storage environment for tracking application lifecycles and maintaining system audit logs.
+Basic Tasks:
+Authenticate incoming requests by cross-referencing the app_id (e.g., rccms_summer_camp) and secret keys natively stored within the existing tblclientauth table.
+Serve plot list queries internally by dynamically filtering the masPlotList master table based on village codes and Khatian numbers.
+Distribute validated, post-submission Section 14 application data across a highly normalized schema, utilizing tblrevcases for core metadata, tblpetetioners for applicant demographics, and tbllanddetails for granular plot records.
+Maintain a strict operational audit trail within the tbluserlog table.
+iv) External Integration (Proxy Layer): 
+To provide users with accurate, pre-populated data, the system features a dedicated integration pipeline that communicates securely with the external Land-records API.
+Core Technologies: Spring RestTemplate or WebClient for asynchronous HTTP processing, and JSON for data parsing. 
+Fundamental Work: To bridge the gap between the isolated Land Allotment system and wider external government datasets without compromising internal security.
+Basic Tasks:
+Receive specific context parameters (such as User IDs or application IDs) passed securely from the SpringBoot backend.
+Act as a secure proxy to query the external Tripura RCCMS APIs to retrieve the cascading geographical location hierarchy (District down to Mouza).
+Transmit this structured geographical JSON data back to the frontend to dynamically populate the user’s dropdown menus.
+4). Security, Authentication & Threat Mitigation
+Given that the Land Allotment application processes sensitive government records and demographic data, implementing a stringent, multi-layered security posture is paramount. The system employs a “Defense in Depth” strategy, ensuring that data is authenticated at the perimeter, sanitized at the client level, and securely processed at the server level.
+Cryptographic Integrity and Source Authentication (HMAC)
+To establish a zero-trust perimeter, the system does not accept any redirection request at face value. Instead, it utilizes a cryptographic handshake to verify the origin and integrity of the incoming data. 
+Algorithm & Mechanism: The system enforces a Hash-based Message Authentication Code utilizing Java’s HmacSHA256 instance. The output is securely encoded in Base64 and sanitized via regex (replacing specific URL-encoded characters like +) before validation.
+Payload Verification: The cryptographic signature is generated dynamically depending on the API endpoint. For localized data fetching, the HMAC message concatenates specific geographic codes with the app_id (e.g., distcode + subdivcode + app_id for the Revenue Circle API). The app_id utilized for this environment is defined as rccms_summer_camp.
+Client-Side Defenses and Input Sanitization
+Before any data payload is allowed to reach the backend database, the presentation layer acts as a strict firewall to ensure data hygiene and mitigate injection vulnerabilities.  
+Vulnerability Mitigation: The frontend actively sanitizes all text inputs, stripping out executable scripts and malformed queries to neutralize the risk of Cross-Site Scripting (XSS) and SQL Injection attacks.  
+Type & Format Enforcement: The system enforces strict data typing, ensuring that numeric fields (like “Area Recorded”) do not accept alphabetical characters, and mandatory fields cannot be bypassed during submission.  
+Secure File Handling: Uploaded supporting documents (such as the Electricity Bill) are strictly validated for correct MIME types (PDF) to prevent the execution of malicious shell scripts disguised as documents.
+Anti-Automation and Bot Protection
+To protect the system from automated spam submissions, brute-force attacks, and Denial of Service (DoS) attempts, the application integrates an interactive security layer.
+Captcha Verification: The frontend enforces a visual Captcha challenge. This ensures that every submitted application is verified as human-generated before the backend allocates processing power or database connections to the request.
+Fail-Safe Routing and Data Obfuscation
+Security extends to how the system handles failures. Exposing system architecture through error messages is a critical security vulnerability.
+Data Obfuscation: In the event of a system crash, database timeout, or validation failure, the backend intercepts the technical stack trace. 
+Secure Logging & Redirection: The sensitive stack trace is securely logged internally within the isolated error_logs table. Meanwhile, the user is presented with a generic, user-friendly error message and safely redirected to the designated Jami Pariseva error handler, completely obscuring the internal system architecture from potential attackers.
