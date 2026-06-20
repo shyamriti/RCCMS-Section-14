@@ -31,7 +31,7 @@ public class DistrictService {
                 clientAuthService.getClientByAppId(appId);
 
         if (client.isEmpty()) {
-            return "App ID not found in tblclientauth";
+            throw new RuntimeException( "App ID not found in tblclientauth");
         }
 
         String appKey =
