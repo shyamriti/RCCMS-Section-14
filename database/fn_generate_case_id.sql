@@ -14,19 +14,19 @@ DECLARE
     v_caseid VARCHAR;
 BEGIN
 
-    SELECT caseid
+    SELECT slno
     INTO v_last_caseid
     FROM tblrevcases
     WHERE statecode = p_statecode
       AND distcode = p_distcode
       AND caseyear = p_caseyear
-    ORDER BY split_part(caseid, '-', 4)::INTEGER DESC
+    ORDER BY slno::INTEGER DESC
     LIMIT 1;
 
     IF v_last_caseid IS NULL THEN
         v_serial := 1;
     ELSE
-        v_serial := split_part(v_last_caseid, '-', 4)::INTEGER + 1;
+        v_serial := v_last_caseid::INTEGER + 1;
     END IF;
 
     v_caseid :=
