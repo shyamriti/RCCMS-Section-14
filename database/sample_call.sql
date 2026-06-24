@@ -29,10 +29,51 @@ CALL sp_submit_section14_application
     "statecode":"16",
     "distcode":"02",
     "caseyear":"2026",
-    "subject":"Sample Subject",
-    "undersection":"95",
-    "petitioners":[],
-    "lands":[]
+    "officeid":"040203",
+    "subdivcode":"03",
+    "revcirclecode":"01",
+
+    "tehsilcode":"01",
+    "moucode":"20125",
+
+    "khatiannos":"777",
+    "plotnos":"1780",
+
+    "landamount":"0.070",
+
+    "appldocsl":"1",
+
+    "subject":"Please Correction Of Plot Records",
+
+    "opponents":"The State Of Tripura",
+
+    "petitioners":[
+        {
+            "petisl":1,
+            "petiname":"Sri Chitta Ranjan Paul",
+            "petirelation":"S/O",
+            "petifh_name":"Father Name",
+            "petiaddress":"Agartala",
+            "peticontactno":"9876543210",
+            "petiemail":"test@example.com"
+        }
+    ],
+
+    "lands":[
+        {
+            "moucode":"20125",
+            "ktsr":"777",
+            "ptsr":"1780",
+            "area":"0.070",
+            "main_class_code":"01",
+            "sub_class_code":"03"
+        }
+    ],
+
+    "user":{
+        "userid":"admin",
+        "computer":"127.0.0.1"
+    }
 }'::jsonb,
 
 NULL

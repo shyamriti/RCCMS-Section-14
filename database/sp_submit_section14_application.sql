@@ -9,11 +9,14 @@ LANGUAGE plpgsql
 AS
 $$
 DECLARE
+    v_slno INTEGER;
+    v_opponent_name VARCHAR;
     v_caseid VARCHAR;
     v_officename VARCHAR;
     v_officeplace VARCHAR;
     v_petitioner JSON;
     v_land JSON;
+    v_petitioner_name VARCHAR;
 BEGIN
 
     -- Validate Client
@@ -21,23 +24,54 @@ BEGIN
         RAISE EXCEPTION 'Invalid Client Authentication';
     END IF;
 
+    SELECT COALESCE(MAX(slno),0) + 1
+    INTO v_slno
+    FROM tblrevcases
+    WHERE statecode = '16'
+    AND distcode = p_case_data->>'distcode'
+    AND caseyear = EXTRACT(YEAR FROM CURRENT_DATE)::VARCHAR;
+
     -- Generate Case ID
     v_caseid := fn_generate_case_id(
         p_case_data->>'statecode',
         p_case_data->>'distcode',
-        p_case_data->>'caseyear'
+        EXTRACT(YEAR FROM CURRENT_DATE)::VARCHAR
+        -- p_case_data->>'caseyear'
     );
 
+    -- v_caseid := fn_generate_case_id(
+    -- '16',
+    -- '02',
+    -- '2026'
+    -- );
+
+    -- RAISE NOTICE 'state=% dist=% year=%',
+    -- p_case_data->>'statecode',
+    -- p_case_data->>'distcode',
+    -- p_case_data->>'caseyear';
+
+    -- RAISE NOTICE 'Generated Case ID = %', v_caseid;
+
     SELECT
-    officename,
-    officeplace
+        officename,
+        officeplace
     INTO
         v_officename,
         v_officeplace
-    FROM masdistrict
-    WHERE statecode = p_case_data->>'statecode'
-    AND distcode = p_case_data->>'distcode'
+    FROM massubdivision
+    WHERE officeid = p_case_data->>'officeid'
     LIMIT 1;
+
+    v_petitioner_name :=
+    (
+        p_case_data->'petitioners'->0->>'petiname'
+    );
+
+    v_opponent_name :=
+    COALESCE(
+        p_case_data->>'opponents',
+        'The State Of Tripura'
+    );
 
     -- Insert Case Details
     INSERT INTO tblrevcases
@@ -50,27 +84,64 @@ BEGIN
         distcode,
         subdivcode,
         revcirclecode,
+        tehsilcode,
+        moucode,
+        khatiannos,
+        plotnos,
+        petitioners,
+        opponents,
+        landamount,
+        applicationdt,
+        appldocsl,
+        slno,
         caseyear,
         subject,
         undersection,
+        casestatus,
+        ifonline,
         ifcsc
     )
     VALUES
     (
         v_caseid,
-        p_case_data->>'statecode',
+        '16',
         p_case_data->>'officeid',
         v_officename,
         v_officeplace,
         p_case_data->>'distcode',
         p_case_data->>'subdivcode',
         p_case_data->>'revcirclecode',
-        p_case_data->>'caseyear',
+
+        p_case_data->>'tehsilcode',
+        p_case_data->>'moucode',
+
+        p_case_data->>'khatiannos',
+        p_case_data->>'plotnos',
+
+        v_petitioner_name,
+
+        v_opponent_name,
+
+        p_case_data->>'landamount',
+
+        CURRENT_DATE,
+
+        COALESCE((p_case_data->>'appldocsl')::INTEGER,0),
+
+        v_slno,
+
+        EXTRACT(YEAR FROM CURRENT_DATE)::VARCHAR,
+
         p_case_data->>'subject',
-        p_case_data->>'undersection',
+
+        '14(1)',
+
+        '1',
+
+        TRUE,
+
         FALSE
     );
-
 
     -----------------------------------------------------------------
     -- Insert Petitioners
