@@ -14,7 +14,12 @@ public class ClientAuthService {
     @Autowired
     private ClientAuthRepository repository;
 
-    public Optional<TblClientAuth> getClientByAppId(String appId) {
-        return repository.findByAppId(appId);
-    }
+   public Optional<TblClientAuth> getClientByAppId(String appId) {
+
+    Optional<TblClientAuth> client = repository.findByAppId(appId);
+
+    System.out.println("CLIENT = " + client);
+
+    return client;
+}
 }

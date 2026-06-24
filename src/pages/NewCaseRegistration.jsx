@@ -1,6 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { useLocation } from "react-router-dom";
 
 function NewCaseRegistration() {
+  const location = useLocation();
+
+const { appId } = location.state || {
+  appId: "rccms_summer_camp"
+};
+
+const [districts, setDistricts] = useState([]);
+useEffect(() => {
+  const loadDistricts = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/api/districts?appId=${appId}`
+      );
+
+      console.log(response.data);
+      setDistricts(response.data);
+    } catch (error) {
+      console.error("Error loading districts:", error);
+    }
+  };
+
+  loadDistricts();
+}, [appId]);
   const [applicants, setApplicants] = useState([
   {
     id: 1,
@@ -49,6 +74,67 @@ function NewCaseRegistration() {
     }
   ]);
 };
+const handleSubmit = async () => {
+
+  const payload = {
+    appId: "rccms_summer_camp",
+    appKey: "d4d6e2c0dd461e873663bb228229d9200cc2a2799a88df817k6e7b95a0992797",
+
+  caseData: {
+  statecode: "16",
+  distcode: "02",
+  officeid: "1",
+  subdivcode: "1",
+  revcirclecode: "1",
+  caseyear: "2026",
+  subject: "Sample Subject",
+  undersection: "95",
+
+  petitioners: applicants.map((a, index) => ({
+    petisl: index + 1,
+    petiname: a.name,
+    petirelation: a.relation,
+    petifh_name: a.guardian,
+    petiaddress: a.address,
+    peticontactno: a.mobile,
+    petiemail: a.email
+  })),
+
+  lands: lands.map((l) => ({
+    moucode: "1",
+    ktsr: l.khatianNo,
+    ptsr: l.plotNo,
+    area: l.areaRecorded,
+    main_class_code: l.landMainClass,
+    sub_class_code: l.landSubClass
+  })),
+
+  user: {
+    userid: "demo",
+    computer: "localhost"
+  }
+}
+  };
+
+  try {
+
+    const response = await axios.post(
+      "http://localhost:8080/api/submit-section14",
+      payload
+    );
+
+    console.log(response.data);
+
+    alert("Case Submitted Successfully");
+    alert("Case ID : " + response.data.caseId);
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert("Submission Failed");
+  }
+};
   return (
     <div className="glass-container">
 
@@ -72,9 +158,18 @@ function NewCaseRegistration() {
 
     <div className="form-group">
       <label>District</label>
-      <select>
-        <option>Select District</option>
-      </select>
+     <select>
+  <option value="">Select District</option>
+
+  {districts.map((district) => (
+    <option
+      key={district.distcode}
+      value={district.distcode}
+    >
+      {district.distname}
+    </option>
+  ))}
+</select>
     </div>
 
     <div className="form-group">
@@ -282,13 +377,16 @@ function NewCaseRegistration() {
       <div className="form-actions">
   <div className="button-group">
 
-  <button className="btn-primary">
+  <button
+    className="btn-primary"
+    onClick={handleSubmit}
+>
     Submit
-  </button>
+</button>
 
-  <button className="cancel-btn">
+<button className="cancel-btn">
     Cancel
-  </button>
+</button>
 
 </div>
 </div>
