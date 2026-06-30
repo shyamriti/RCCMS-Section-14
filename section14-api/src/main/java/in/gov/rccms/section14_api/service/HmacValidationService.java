@@ -27,10 +27,8 @@ public class HmacValidationService {
                 sha256_HMAC.doFinal(
                         message.getBytes(StandardCharsets.UTF_8)));
 
-        generatedHmac = generatedHmac
-                .replaceAll("%(?![0-9a-fA-F]{2})", "%25")
-                .replaceAll("\\+", "");
-
+      generatedHmac = generatedHmac
+        .replaceAll("%(?![0-9a-fA-F]{2})", "%25");
         return generatedHmac;
     }
 }
