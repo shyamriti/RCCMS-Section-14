@@ -13,73 +13,59 @@ import in.gov.rccms.section14_api.entity.TblClientAuth;
 @Service
 public class DistrictService {
 
-        private static final Logger log =
-        LoggerFactory.getLogger(DistrictService.class);
+        private static final Logger log = LoggerFactory.getLogger(DistrictService.class);
 
-    @Autowired
-    private ClientAuthService clientAuthService;
+        @Autowired
+        private ClientAuthService clientAuthService;
 
-    @Autowired
-    private HmacValidationService hmacValidationService;
+        @Autowired
+        private HmacValidationService hmacValidationService;
 
-    public String getDistricts(String appId) throws Exception {
-                
-        log.info("District API Called");
+        public String getDistricts(String appId) throws Exception {
 
+                log.info("District API Called");
 
-        Optional<TblClientAuth> client =
-                clientAuthService.getClientByAppId(appId);
+                Optional<TblClientAuth> client = clientAuthService.getClientByAppId(appId);
 
-        if (client.isEmpty()) {
-            throw new RuntimeException( "App ID not found in tblclientauth");
+                if (client.isEmpty()) {
+                        throw new RuntimeException("App ID not found in tblclientauth");
+                }
+
+                String appKey = client.get().getAppKey();
+
+                String officeLevel = "02";
+
+                String message = officeLevel + appId;
+
+                String hmac = hmacValidationService.generateRccmsHmac(
+                                message,
+                                appKey);
+
+                log.info("MESSAGE : {}", message);
+                log.info("HMAC : {}", hmac);
+
+                String baseUrl = "https://rccms.tripura.gov.in/uat-rccmsapis/webresources/api/v2/getdistrict";
+
+                String url = baseUrl
+                                + "?app_id=" + appId
+                                + "&client_hmac=" + hmac
+                                + "&officelevel=" + officeLevel;
+
+                log.info("URL : {}", url);
+
+                RestTemplate restTemplate = new RestTemplate();
+                String response = restTemplate.getForObject(
+                                url,
+                                String.class);
+
+                if (response == null || response.isBlank()) {
+                        log.error("Empty response received from RCCMS API");
+                        throw new RuntimeException(
+                                        "Invalid RCCMS response");
+                }
+
+                log.info("District API response received successfully");
+
+                return response;
         }
-
-        String appKey =
-                client.get().getAppKey();
-
-        String officeLevel = "02";
-
-        String message =
-                officeLevel + appId;
-
-        String hmac =
-                hmacValidationService.generateHmac(
-                        message,
-                        appKey);
-
-        
-        log.info("MESSAGE : {}", message);
-           log.info("HMAC : {}", hmac);
-
-
-        String baseUrl =
-                "https://rccms.tripura.gov.in/uat-rccmsapis/webresources/api/v2/getdistrict";
-
-        String url =
-                baseUrl
-                + "?app_id=" + appId
-                + "&client_hmac=" + hmac
-                + "&officelevel=" + officeLevel;
-
-        log.info("URL : {}", url);
-
-        RestTemplate restTemplate =
-                new RestTemplate();
-String response =
-        restTemplate.getForObject(
-                url,
-                String.class);
-
-if(response == null || response.isBlank())
-{
-    log.error("Empty response received from RCCMS API");
-    throw new RuntimeException(
-            "Invalid RCCMS response");
 }
-
-log.info("District API response received successfully");
-
-return response;
-    }
-}  
-

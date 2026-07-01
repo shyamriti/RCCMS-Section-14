@@ -66,7 +66,7 @@ public class HmacValidationController {
 
                         // Step 3: Generate HMAC Using DB Key
 
-                        String generatedHmac = hmacValidationService.generateHmac(
+                        String generatedHmac = hmacValidationService.generateInternalHmac(
                                         message,
                                         client.get().getAppKey());
                         System.out.println("================================");
