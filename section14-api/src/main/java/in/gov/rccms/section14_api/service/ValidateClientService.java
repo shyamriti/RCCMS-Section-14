@@ -14,8 +14,7 @@ public class ValidateClientService {
             String appId,
             String appKey) {
 
-        String sql =
-                "SELECT sp_validate_client(?, ?)";
+        String sql = "SELECT sp_validate_client(?, ?)";
 
         return jdbcTemplate.queryForObject(
                 sql,

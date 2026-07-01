@@ -78,10 +78,16 @@ public class MouzaService {
         RestTemplate restTemplate =
                 new RestTemplate();
 
-        String response =
-                restTemplate.getForObject(
-                        url,
-                        String.class);
+        long start = System.currentTimeMillis();
+
+String response =
+        restTemplate.getForObject(
+                url,
+                String.class);
+
+long end = System.currentTimeMillis();
+
+System.out.println("External API Time: " + (end - start) + " ms");
 
         if (response == null ||
                 response.isBlank()) {
