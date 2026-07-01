@@ -144,6 +144,23 @@ const [credentials] = useState({
 
   return (
     <div className="glass-container" style={{ maxWidth: '680px' }}>
+      <div
+        style={{
+          background: 'rgba(255, 255, 255, 0.85)',
+          padding: '1rem 1.25rem',
+          borderRadius: '16px',
+          border: '1px solid rgba(226, 51, 77, 0.12)',
+          marginBottom: '1.5rem',
+          color: '#2c3e50',
+          boxShadow: '0 10px 24px rgba(0,0,0,0.04)'
+        }}
+      >
+        <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Welcome to Jami Pariseva</h2>
+        <p style={{ margin: '0.5rem 0 0', color: '#5b7083' }}>
+          Verify your credentials to begin the Section 14 application process.
+        </p>
+      </div>
+
       <div className="credentials-list" style={{ marginBottom: '1.25rem' }}>
         <CredentialCard
           label="Transaction ID"

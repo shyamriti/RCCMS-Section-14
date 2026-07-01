@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function NewCaseRegistration() {
   const location = useLocation();
@@ -51,8 +51,25 @@ function NewCaseRegistration() {
   const [subject, setSubject] = useState("Sample Subject");
   const [undersection, setUndersection] = useState("95");
   const [areaToBeAllotted, setAreaToBeAllotted] = useState("");
+  const [captchaValue, setCaptchaValue] = useState("");
+  const [captchaInput, setCaptchaInput] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const navigate = useNavigate();
+
+  const generateCaptcha = () => {
+    const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    let code = "";
+    for (let i = 0; i < 5; i++) {
+      code += letters.charAt(Math.floor(Math.random() * letters.length));
+    }
+    setCaptchaValue(code);
+    setCaptchaInput("");
+  };
+
+  useEffect(() => {
+    generateCaptcha();
+  }, []);
 
   useEffect(() => {
     const loadDistricts = async () => {
@@ -180,6 +197,12 @@ function NewCaseRegistration() {
     ]);
   };
 
+  const removeLastApplicant = () => {
+    setApplicants((prev) =>
+      prev.length > 1 ? prev.slice(0, -1) : prev
+    );
+  };
+
   const addLand = () => {
     setLands([
       ...lands,
@@ -192,6 +215,12 @@ function NewCaseRegistration() {
         landSubClass: ""
       }
     ]);
+  };
+
+  const removeLastLand = () => {
+    setLands((prev) =>
+      prev.length > 1 ? prev.slice(0, -1) : prev
+    );
   };
 
   const handleApplicantChange = (index, field, value) => {
@@ -219,6 +248,12 @@ function NewCaseRegistration() {
       !selectedMouja
     ) {
       alert("Please select district, subdivision, revenue circle, tehsil, and mouja.");
+      return;
+    }
+
+    if (captchaInput.trim().toUpperCase() !== captchaValue) {
+      alert("Captcha does not match. Please try again.");
+      generateCaptcha();
       return;
     }
 
@@ -406,6 +441,15 @@ function NewCaseRegistration() {
             <button className="add-btn" onClick={addApplicant}>
               + Add Applicant
             </button>
+            {applicants.length > 1 && (
+              <button
+                className="cancel-btn"
+                type="button"
+                onClick={removeLastApplicant}
+              >
+                Cancel
+              </button>
+            )}
           </div>
           <div className="section-divider"></div>
         </div>
@@ -531,6 +575,15 @@ function NewCaseRegistration() {
           <button className="add-btn" onClick={addLand}>
             + Add Land
           </button>
+          {lands.length > 1 && (
+            <button
+              className="cancel-btn"
+              type="button"
+              onClick={removeLastLand}
+            >
+              Cancel
+            </button>
+          )}
         </div>
         <div className="section-divider"></div>
       </div>
@@ -569,8 +622,13 @@ function NewCaseRegistration() {
       </div>
       <div className="form-group">
         <label>Captcha</label>
-        <div className="captcha-box">ABCDE</div>
-        <input type="text" placeholder="Enter Captcha" />
+        <div className="captcha-box">{captchaValue}</div>
+        <input
+          type="text"
+          placeholder="Enter Captcha"
+          value={captchaInput}
+          onChange={(e) => setCaptchaInput(e.target.value)}
+        />
       </div>
 
       <div className="form-actions">
@@ -578,7 +636,11 @@ function NewCaseRegistration() {
           <button className="btn-primary" onClick={handleSubmit} disabled={isConnecting}>
             {isConnecting ? "Submitting..." : "Submit"}
           </button>
-          <button className="cancel-btn" type="button">
+          <button
+            className="cancel-btn"
+            type="button"
+            onClick={() => navigate("/")}
+          >
             Cancel
           </button>
         </div>
