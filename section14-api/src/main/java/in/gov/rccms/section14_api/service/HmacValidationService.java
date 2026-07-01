@@ -1,11 +1,11 @@
 package in.gov.rccms.section14_api.service;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,24 +13,35 @@ public class HmacValidationService {
 
     public String generateHmac(
             String message,
-            String secretKey) throws Exception {
+            String secretKey) {
 
-        Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
+        try {
 
-        SecretKeySpec secret_key = new SecretKeySpec(
-                secretKey.getBytes(StandardCharsets.UTF_8),
-                "HmacSHA256");
+            Mac sha256Hmac = Mac.getInstance("HmacSHA256");
 
-        sha256_HMAC.init(secret_key);
+            SecretKeySpec secret = new SecretKeySpec(
+                    secretKey.getBytes(StandardCharsets.UTF_8),
+                    "HmacSHA256");
 
-        String generatedHmac = Base64.getEncoder().encodeToString(
-                sha256_HMAC.doFinal(
-                        message.getBytes(StandardCharsets.UTF_8)));
+            sha256Hmac.init(secret);
 
-     generatedHmac = generatedHmac
-        .replaceAll("%(?![0-9a-fA-F]{2})", "%25")
-        .replaceAll("\\+", "");
+            byte[] signedBytes = sha256Hmac.doFinal(
+                    message.getBytes(StandardCharsets.UTF_8));
 
-return generatedHmac;
+            String generatedHmac = Base64
+                    .encodeBase64String(signedBytes)
+                    .trim();
+
+            generatedHmac = generatedHmac
+                    .replaceAll("%(?![0-9a-fA-F]{2})", "%25")
+                    .replaceAll("\\+", "");
+
+            return generatedHmac;
+
+        } catch (Exception e) {
+
+            throw new RuntimeException(
+                    "Failed to calculate HMAC signature", e);
+        }
     }
 }
