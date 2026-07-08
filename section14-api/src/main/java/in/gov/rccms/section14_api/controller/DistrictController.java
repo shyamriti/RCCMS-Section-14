@@ -16,7 +16,7 @@ public class DistrictController {
     private DistrictService districtService;
 
     @GetMapping("/districts")
-    public String getDistricts( @RequestParam String appId) throws Exception {
+    public String getDistricts(@RequestParam String appId) throws Exception {
 
         return districtService.getDistricts(appId);
     }
