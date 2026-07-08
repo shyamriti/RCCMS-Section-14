@@ -17,13 +17,18 @@ function NewCaseRegistration() {
   const [revenueCircles, setRevenueCircles] = useState([]);
   const [tehsils, setTehsils] = useState([]);
   const [mouzas, setMouzas] = useState([]);
+  const [plots, setPlots] = useState([]);
 
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedSubdivision, setSelectedSubdivision] = useState("");
   const [selectedRevenueCircle, setSelectedRevenueCircle] = useState("");
   const [selectedTehsil, setSelectedTehsil] = useState("");
   const [selectedMouja, setSelectedMouja] = useState("");
+<<<<<<< HEAD
   const [selectedLgdVillageCode, setSelectedLgdVillageCode] = useState("");
+=======
+  const [selectedPlot, setSelectedPlot] = useState("");
+>>>>>>> 6391352 (Integrated plot API frontend changes)
 
   const [applicants, setApplicants] = useState([
     {
@@ -161,10 +166,15 @@ function NewCaseRegistration() {
         const response = await axios.get(
           `http://localhost:8080/api/mouzas?appId=${appId}&distcode=${selectedDistrict}&subdivcode=${selectedSubdivision}&revcirclecode=${selectedRevenueCircle}&tehsilcode=${selectedTehsil}`
         );
+<<<<<<< HEAD
         const data = response.data || [];
         setMouzas(data);
         // Debug: inspect a sample mouza object to map lgd_village_code
         console.log("Mouza API sample:", Array.isArray(data) ? data[0] : data);
+=======
+     
+setMouzas(response.data || []);
+>>>>>>> 6391352 (Integrated plot API frontend changes)
       } catch (error) {
         console.error("Error loading mouzas:", error);
       }
@@ -172,7 +182,18 @@ function NewCaseRegistration() {
 
     loadMouzas();
   }, [selectedTehsil, selectedRevenueCircle, selectedSubdivision, selectedDistrict, appId]);
+const loadPlots = async (lgdVillageCode, khatianNo) => {
+  try {
+    const response = await axios.get(
+      `http://localhost:8080/api/plots?lgd_village_code=${lgdVillageCode}&khatian_no=${khatianNo}`
+    );
 
+    setPlots(response.data || []);
+  } catch (error) {
+    console.error("Error loading plots:", error);
+    setPlots([]);
+  }
+};
   const addApplicant = () => {
     setApplicants([
       ...applicants,
@@ -517,11 +538,14 @@ function NewCaseRegistration() {
             disabled={!mouzas.length}
           >
             <option value="">Select Mouja</option>
-            {mouzas.map((mouza) => (
-              <option key={mouza.moucode} value={mouza.moucode}>
-                {mouza.mouname}
-              </option>
-            ))}
+           {mouzas.map((mouza) => (
+  <option
+    key={mouza.moucode}
+    value={mouza.moucode}
+  >
+    {mouza.mouname}
+  </option>
+))}
           </select>
         </div>
       </div>
@@ -538,6 +562,7 @@ function NewCaseRegistration() {
             </tr>
           </thead>
           <tbody>
+<<<<<<< HEAD
             {lands.map((land, index) => {
               const plots = plotsByLandIndex[index] || [];
               const plotErr = plotErrorByLandIndex[index] || "";
@@ -618,6 +643,75 @@ function NewCaseRegistration() {
                 </tr>
               );
             })}
+=======
+            {lands.map((land, index) => (
+              <tr key={land.id}>
+            <td>
+  <input
+    type="text"
+    value={land.khatianNo}
+    onChange={(e) => {
+      handleLandChange(index, "khatianNo", e.target.value);
+
+      if (selectedMouja && e.target.value.length > 0) {
+        loadPlots(selectedMouja, e.target.value);
+      }
+    }}
+  />
+</td>
+           <td>
+  <select
+    value={land.plotNo}
+    onChange={(e) => {
+      const selected = plots.find(
+        (p) => p.plot_no === e.target.value
+      );
+
+      handleLandChange(index, "plotNo", e.target.value);
+
+      if (selected) {
+        handleLandChange(index, "areaRecorded", selected.plot_area);
+        handleLandChange(index, "landMainClass", selected.land_mainclass_code);
+        handleLandChange(index, "landSubClass", selected.land_subclass_code);
+      }
+    }}
+  >
+    <option value="">Select Plot</option>
+
+    {plots.map((plot) => (
+      <option
+        key={plot.plot_no}
+        value={plot.plot_no}
+      >
+        {plot.plot_no}
+      </option>
+    ))}
+  </select>
+</td>
+          <td>
+  <input
+    type="text"
+    value={land.areaRecorded}
+    readOnly
+  />
+</td>
+            <td>
+  <input
+    type="text"
+    value={land.landMainClass}
+    readOnly
+  />
+</td>
+             <td>
+  <input
+    type="text"
+    value={land.landSubClass}
+    readOnly
+  />
+</td>
+              </tr>
+            ))}
+>>>>>>> 6391352 (Integrated plot API frontend changes)
           </tbody>
         </table>
 
