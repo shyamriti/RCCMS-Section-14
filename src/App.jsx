@@ -21,6 +21,7 @@ function App() {
             path="/new-case-registration"
             element={<NewCaseRegistration />}
           />
+
         </Routes>
       </main>
 

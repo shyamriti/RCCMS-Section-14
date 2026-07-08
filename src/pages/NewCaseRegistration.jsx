@@ -23,6 +23,7 @@ function NewCaseRegistration() {
   const [selectedRevenueCircle, setSelectedRevenueCircle] = useState("");
   const [selectedTehsil, setSelectedTehsil] = useState("");
   const [selectedMouja, setSelectedMouja] = useState("");
+  const [selectedLgdVillageCode, setSelectedLgdVillageCode] = useState("");
 
   const [applicants, setApplicants] = useState([
     {
@@ -46,6 +47,9 @@ function NewCaseRegistration() {
       landSubClass: ""
     }
   ]);
+
+  const [plotsByLandIndex, setPlotsByLandIndex] = useState({});
+  const [plotErrorByLandIndex, setPlotErrorByLandIndex] = useState({});
 
   const [caseYear, setCaseYear] = useState("2026");
   const [subject, setSubject] = useState("Sample Subject");
@@ -148,6 +152,7 @@ function NewCaseRegistration() {
     if (!selectedTehsil) {
       setMouzas([]);
       setSelectedMouja("");
+      setSelectedLgdVillageCode("");
       return;
     }
 
@@ -156,7 +161,10 @@ function NewCaseRegistration() {
         const response = await axios.get(
           `http://localhost:8080/api/mouzas?appId=${appId}&distcode=${selectedDistrict}&subdivcode=${selectedSubdivision}&revcirclecode=${selectedRevenueCircle}&tehsilcode=${selectedTehsil}`
         );
-        setMouzas(response.data || []);
+        const data = response.data || [];
+        setMouzas(data);
+        // Debug: inspect a sample mouza object to map lgd_village_code
+        console.log("Mouza API sample:", Array.isArray(data) ? data[0] : data);
       } catch (error) {
         console.error("Error loading mouzas:", error);
       }
@@ -202,12 +210,50 @@ function NewCaseRegistration() {
     );
   };
 
+  const fetchPlotsForLandRow = async (index, nextKhatianNo) => {
+    // Use resolved lgd_village_code if available; fallback to moucode.
+    const lgdVillageCodeToUse = selectedLgdVillageCode || selectedMouja;
+    if (!lgdVillageCodeToUse || !nextKhatianNo) return;
+
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/plots?lgd_village_code=${encodeURIComponent(
+          lgdVillageCodeToUse
+        )}&khatian_no=${encodeURIComponent(nextKhatianNo)}`
+      );
+
+      let data = res.data;
+      if (typeof data === "string") data = JSON.parse(data);
+
+      setPlotsByLandIndex((prev) => ({ ...prev, [index]: Array.isArray(data) ? data : [] }));
+      setPlotErrorByLandIndex((prev) => ({ ...prev, [index]: "" }));
+    } catch (err) {
+      console.error("Error loading plots:", err);
+      setPlotsByLandIndex((prev) => ({ ...prev, [index]: [] }));
+      const backendMessage =
+        err?.response?.data?.message ||
+        err?.response?.data ||
+        err?.message ||
+        "Unknown error";
+      setPlotErrorByLandIndex((prev) => ({ ...prev, [index]: String(backendMessage) }));
+    }
+  };
+
   const handleLandChange = (index, field, value) => {
-    setLands((prev) =>
-      prev.map((land, idx) =>
-        idx === index ? { ...land, [field]: value } : land
-      )
-    );
+    setLands((prev) => prev.map((land, idx) => (idx === index ? { ...land, [field]: value } : land)));
+
+    if (field === "khatianNo") {
+      // reset plot-related values for this row
+      setLands((prev) =>
+        prev.map((land, idx) =>
+          idx === index
+            ? { ...land, plotNo: "", areaRecorded: "", landMainClass: "", landSubClass: "" }
+            : land
+        )
+      );
+
+      fetchPlotsForLandRow(index, value);
+    }
   };
 
   const handleSubmit = async () => {
@@ -415,14 +461,14 @@ function NewCaseRegistration() {
         <div className="section-label">Land Details</div>
       </div>
 
-      <div className="form-grid">
-        <div className="form-group">
-          <label>Revenue Circle</label>
-          <select
-            value={selectedRevenueCircle}
-            onChange={(e) => setSelectedRevenueCircle(e.target.value)}
-            disabled={!revenueCircles.length}
-          >
+        <div className="form-grid">
+          <div className="form-group">
+            <label>Revenue Circle</label>
+            <select
+              value={selectedRevenueCircle}
+              onChange={(e) => setSelectedRevenueCircle(e.target.value)}
+              disabled={!revenueCircles.length}
+            >
             <option value="">Select Revenue Circle</option>
             {revenueCircles.map((circle) => (
               <option key={circle.revcirclecode} value={circle.revcirclecode}>
@@ -452,7 +498,22 @@ function NewCaseRegistration() {
           <label>Mouja</label>
           <select
             value={selectedMouja}
-            onChange={(e) => setSelectedMouja(e.target.value)}
+            onChange={(e) => {
+              const nextMoucode = e.target.value;
+              setSelectedMouja(nextMoucode);
+
+              const selected = mouzas.find((m) => String(m.moucode) === String(nextMoucode));
+              // Common possibilities (depends on external API naming)
+              const nextLgd =
+                selected?.lgd_village_code ??
+                selected?.lgd_village ??
+                selected?.lgdVillageCode ??
+                selected?.lgd_villagecode ??
+                selected?.lgdVillageCode ??
+                null;
+
+              setSelectedLgdVillageCode(nextLgd || "");
+            }}
             disabled={!mouzas.length}
           >
             <option value="">Select Mouja</option>
@@ -477,53 +538,86 @@ function NewCaseRegistration() {
             </tr>
           </thead>
           <tbody>
-            {lands.map((land, index) => (
-              <tr key={land.id}>
-                <td>
-                  <input
-                    type="text"
-                    value={land.khatianNo}
-                    onChange={(e) =>
-                      handleLandChange(index, "khatianNo", e.target.value)
-                    }
-                  />
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    value={land.plotNo}
-                    onChange={(e) => handleLandChange(index, "plotNo", e.target.value)}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    value={land.areaRecorded}
-                    onChange={(e) =>
-                      handleLandChange(index, "areaRecorded", e.target.value)
-                    }
-                  />
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    value={land.landMainClass}
-                    onChange={(e) =>
-                      handleLandChange(index, "landMainClass", e.target.value)
-                    }
-                  />
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    value={land.landSubClass}
-                    onChange={(e) =>
-                      handleLandChange(index, "landSubClass", e.target.value)
-                    }
-                  />
-                </td>
-              </tr>
-            ))}
+            {lands.map((land, index) => {
+              const plots = plotsByLandIndex[index] || [];
+              const plotErr = plotErrorByLandIndex[index] || "";
+              return (
+                <tr key={land.id}>
+                  <td>
+                    <input
+                      type="text"
+                      value={land.khatianNo}
+                      onChange={(e) => handleLandChange(index, "khatianNo", e.target.value)}
+                      placeholder="Enter khatian"
+                    />
+                  </td>
+
+                  <td>
+                    <select
+                      value={land.plotNo}
+                      onChange={(e) => {
+                        const nextPlotNo = e.target.value;
+                        const selected = plots.find((p) => String(p.plot_no) === String(nextPlotNo));
+                        setLands((prev) =>
+                          prev.map((l, idx) =>
+                            idx === index
+                              ? {
+                                  ...l,
+                                  plotNo: nextPlotNo,
+                                  areaRecorded: selected?.plot_area ?? "",
+                                  landMainClass: selected?.land_mainclass_code ?? "",
+                                  landSubClass: selected?.land_subclass_code ?? ""
+                                }
+                              : l
+                          )
+                        );
+                      }}
+                      disabled={!plots.length}
+                    >
+                      <option value="">Select Plot</option>
+                      {plots.map((p) => (
+                        <option key={String(p.plot_no)} value={p.plot_no}>
+                          {p.plot_no}
+                        </option>
+                      ))}
+                    </select>
+
+                    {plotErr ? (
+                      <div style={{ marginTop: 6, color: "#ff7b7b", fontSize: 12, maxWidth: 220 }}>
+                        {plotErr}
+                      </div>
+                    ) : null}
+                  </td>
+
+                  <td>
+                    <input
+                      type="text"
+                      value={land.areaRecorded}
+                      onChange={(e) => handleLandChange(index, "areaRecorded", e.target.value)}
+                      disabled={!!plots.length}
+                    />
+                  </td>
+
+                  <td>
+                    <input
+                      type="text"
+                      value={land.landMainClass}
+                      onChange={(e) => handleLandChange(index, "landMainClass", e.target.value)}
+                      disabled={!!plots.length}
+                    />
+                  </td>
+
+                  <td>
+                    <input
+                      type="text"
+                      value={land.landSubClass}
+                      onChange={(e) => handleLandChange(index, "landSubClass", e.target.value)}
+                      disabled={!!plots.length}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 
