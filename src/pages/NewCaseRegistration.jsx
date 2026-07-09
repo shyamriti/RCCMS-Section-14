@@ -17,18 +17,16 @@ function NewCaseRegistration() {
   const [revenueCircles, setRevenueCircles] = useState([]);
   const [tehsils, setTehsils] = useState([]);
   const [mouzas, setMouzas] = useState([]);
-  const [plots, setPlots] = useState([]);
 
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedSubdivision, setSelectedSubdivision] = useState("");
   const [selectedRevenueCircle, setSelectedRevenueCircle] = useState("");
   const [selectedTehsil, setSelectedTehsil] = useState("");
   const [selectedMouja, setSelectedMouja] = useState("");
-<<<<<<< HEAD
   const [selectedLgdVillageCode, setSelectedLgdVillageCode] = useState("");
-=======
+
   const [selectedPlot, setSelectedPlot] = useState("");
->>>>>>> 6391352 (Integrated plot API frontend changes)
+
 
   const [applicants, setApplicants] = useState([
     {
@@ -62,6 +60,19 @@ function NewCaseRegistration() {
   const [areaToBeAllotted, setAreaToBeAllotted] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const generateCaptcha = () => {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let result = "";
+
+  for (let i = 0; i < 5; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+
+  return result;
+};
+
+const [captcha, setCaptcha] = useState(generateCaptcha());
+const [captchaInput, setCaptchaInput] = useState("");
 
   useEffect(() => {
     const loadDistricts = async () => {
@@ -166,15 +177,15 @@ function NewCaseRegistration() {
         const response = await axios.get(
           `http://localhost:8080/api/mouzas?appId=${appId}&distcode=${selectedDistrict}&subdivcode=${selectedSubdivision}&revcirclecode=${selectedRevenueCircle}&tehsilcode=${selectedTehsil}`
         );
-<<<<<<< HEAD
-        const data = response.data || [];
-        setMouzas(data);
-        // Debug: inspect a sample mouza object to map lgd_village_code
-        console.log("Mouza API sample:", Array.isArray(data) ? data[0] : data);
-=======
-     
-setMouzas(response.data || []);
->>>>>>> 6391352 (Integrated plot API frontend changes)
+
+    const data = response.data || [];
+setMouzas(data);
+
+console.log(
+  "Mouza API sample:",
+  Array.isArray(data) ? data[0] : data
+);
+
       } catch (error) {
         console.error("Error loading mouzas:", error);
       }
@@ -182,18 +193,6 @@ setMouzas(response.data || []);
 
     loadMouzas();
   }, [selectedTehsil, selectedRevenueCircle, selectedSubdivision, selectedDistrict, appId]);
-const loadPlots = async (lgdVillageCode, khatianNo) => {
-  try {
-    const response = await axios.get(
-      `http://localhost:8080/api/plots?lgd_village_code=${lgdVillageCode}&khatian_no=${khatianNo}`
-    );
-
-    setPlots(response.data || []);
-  } catch (error) {
-    console.error("Error loading plots:", error);
-    setPlots([]);
-  }
-};
   const addApplicant = () => {
     setApplicants([
       ...applicants,
@@ -208,6 +207,18 @@ const loadPlots = async (lgdVillageCode, khatianNo) => {
       }
     ]);
   };
+  const removeApplicant = (index) => {
+  if (applicants.length === 1) return;
+
+  setApplicants((prev) =>
+    prev
+      .filter((_, i) => i !== index)
+      .map((applicant, i) => ({
+        ...applicant,
+        id: i + 1,
+      }))
+  );
+};
 
   const addLand = () => {
     setLands([
@@ -278,6 +289,12 @@ const loadPlots = async (lgdVillageCode, khatianNo) => {
   };
 
   const handleSubmit = async () => {
+    if (captchaInput.trim().toUpperCase() !== captcha.toUpperCase()) {
+  alert("Invalid Captcha");
+  setCaptcha(generateCaptcha());
+  setCaptchaInput("");
+  return;
+}
     if (
       !selectedDistrict ||
       !selectedSubdivision ||
@@ -328,25 +345,29 @@ const loadPlots = async (lgdVillageCode, khatianNo) => {
     setIsConnecting(true);
     setSubmitMessage("");
 
-    try {
-      const response = await axios.post(
-        "http://localhost:8080/api/submit-section14",
-        payload
-      );
+  try {
+  const response = await axios.post(
+    "http://localhost:8080/api/submit-section14",
+    payload
+  );
 
-      if (response.data?.success) {
-        setSubmitMessage(`Case Submitted Successfully. Case ID: ${response.data.caseId}`);
-      } else {
-        setSubmitMessage(response.data?.message || "Submission failed.");
-      }
-    } catch (error) {
-      console.error(error);
-      const backendMessage =
-        error.response?.data?.message || error.response?.data || error.message;
-      setSubmitMessage(`Submission Failed: ${backendMessage}`);
-    } finally {
-      setIsConnecting(false);
-    }
+  if (response.data?.success) {
+    setSubmitMessage(`Case ID: ${response.data.caseId}`);
+  } else {
+    setSubmitMessage(response.data?.message || "Submission failed.");
+  }
+} catch (error) {
+  console.error(error);
+
+  const backendMessage =
+    error.response?.data?.message ||
+    error.response?.data ||
+    error.message;
+
+  setSubmitMessage(`Submission Failed: ${backendMessage}`);
+} finally {
+  setIsConnecting(false);
+}
   };
 
   return (
@@ -403,7 +424,8 @@ const loadPlots = async (lgdVillageCode, khatianNo) => {
                 <th>Relation</th>
                 <th>Address</th>
                 <th>Mobile</th>
-                <th>Email</th>
+             <th>Email</th>
+            <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -440,6 +462,7 @@ const loadPlots = async (lgdVillageCode, khatianNo) => {
                   <td>
                     <input
                       type="text"
+                        placeholder="Enter Address"
                       value={applicant.address}
                       onChange={(e) =>
                         handleApplicantChange(index, "address", e.target.value)
@@ -464,6 +487,17 @@ const loadPlots = async (lgdVillageCode, khatianNo) => {
                       }
                     />
                   </td>
+                  <td>
+        {applicants.length > 1 && (
+    <button
+      type="button"
+    className="table-delete-btn"
+      onClick={() => removeApplicant(index)}
+    >
+      Delete
+    </button>
+  )}
+</td>
                 </tr>
               ))}
             </tbody>
@@ -523,7 +557,10 @@ const loadPlots = async (lgdVillageCode, khatianNo) => {
               const nextMoucode = e.target.value;
               setSelectedMouja(nextMoucode);
 
-              const selected = mouzas.find((m) => String(m.moucode) === String(nextMoucode));
+           const selected = mouzas.find(
+  (m) => String(m.moucode) === String(nextMoucode)
+);
+
               // Common possibilities (depends on external API naming)
               const nextLgd =
                 selected?.lgd_village_code ??
@@ -539,10 +576,10 @@ const loadPlots = async (lgdVillageCode, khatianNo) => {
           >
             <option value="">Select Mouja</option>
            {mouzas.map((mouza) => (
-  <option
-    key={mouza.moucode}
-    value={mouza.moucode}
-  >
+ <option
+  key={mouza.moucode}
+  value={mouza.moucode}
+>
     {mouza.mouname}
   </option>
 ))}
@@ -562,7 +599,7 @@ const loadPlots = async (lgdVillageCode, khatianNo) => {
             </tr>
           </thead>
           <tbody>
-<<<<<<< HEAD
+
             {lands.map((land, index) => {
               const plots = plotsByLandIndex[index] || [];
               const plotErr = plotErrorByLandIndex[index] || "";
@@ -643,75 +680,7 @@ const loadPlots = async (lgdVillageCode, khatianNo) => {
                 </tr>
               );
             })}
-=======
-            {lands.map((land, index) => (
-              <tr key={land.id}>
-            <td>
-  <input
-    type="text"
-    value={land.khatianNo}
-    onChange={(e) => {
-      handleLandChange(index, "khatianNo", e.target.value);
-
-      if (selectedMouja && e.target.value.length > 0) {
-        loadPlots(selectedMouja, e.target.value);
-      }
-    }}
-  />
-</td>
-           <td>
-  <select
-    value={land.plotNo}
-    onChange={(e) => {
-      const selected = plots.find(
-        (p) => p.plot_no === e.target.value
-      );
-
-      handleLandChange(index, "plotNo", e.target.value);
-
-      if (selected) {
-        handleLandChange(index, "areaRecorded", selected.plot_area);
-        handleLandChange(index, "landMainClass", selected.land_mainclass_code);
-        handleLandChange(index, "landSubClass", selected.land_subclass_code);
-      }
-    }}
-  >
-    <option value="">Select Plot</option>
-
-    {plots.map((plot) => (
-      <option
-        key={plot.plot_no}
-        value={plot.plot_no}
-      >
-        {plot.plot_no}
-      </option>
-    ))}
-  </select>
-</td>
-          <td>
-  <input
-    type="text"
-    value={land.areaRecorded}
-    readOnly
-  />
-</td>
-            <td>
-  <input
-    type="text"
-    value={land.landMainClass}
-    readOnly
-  />
-</td>
-             <td>
-  <input
-    type="text"
-    value={land.landSubClass}
-    readOnly
-  />
-</td>
-              </tr>
-            ))}
->>>>>>> 6391352 (Integrated plot API frontend changes)
+            
           </tbody>
         </table>
 
@@ -755,11 +724,39 @@ const loadPlots = async (lgdVillageCode, khatianNo) => {
       <div className="form-section">
         <div className="section-label">Captcha Verification</div>
       </div>
-      <div className="form-group">
-        <label>Captcha</label>
-        <div className="captcha-box">ABCDE</div>
-        <input type="text" placeholder="Enter Captcha" />
-      </div>
+ <div className="form-group">
+  <label>Captcha</label>
+
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+      marginBottom: "10px",
+    }}
+  >
+    <div className="captcha-box">{captcha}</div>
+
+    <button
+      type="button"
+      className="cancel-btn"
+      style={{ padding: "8px 14px" }}
+      onClick={() => {
+        setCaptcha(generateCaptcha());
+        setCaptchaInput("");
+      }}
+    >
+      ↻
+    </button>
+  </div>
+
+  <input
+    type="text"
+    placeholder="Enter Captcha"
+    value={captchaInput}
+    onChange={(e) => setCaptchaInput(e.target.value)}
+  />
+</div>
 
       <div className="form-actions">
         <div className="button-group">
@@ -772,7 +769,15 @@ const loadPlots = async (lgdVillageCode, khatianNo) => {
         </div>
       </div>
 
-      {submitMessage ? <div className="form-message">{submitMessage}</div> : null}
+  {submitMessage && (
+  <div className="form-message">
+    <div style={{ fontSize: "22px", marginBottom: "8px" }}>
+      ✅ Application Submitted Successfully
+    </div>
+
+    <div>{submitMessage}</div>
+  </div>
+)}
     </div>
   );
 }
